@@ -1,4 +1,4 @@
-## The Ethereum Virtual Machine
+## Chapter 13 From The Ethereum Handbook
 Theses are notes relating to chapter 13 of the *Mastering Ethereum Handbook*
 
 ### Contract Exectuion
@@ -109,3 +109,33 @@ Function identifiers are always 4 bytes in length. (if calldata size is less tha
 | ----------- | ----------- |
 
 The program counter is set to `0x3f` (top of stack) because the second top stack element is equal to `1`. This location holds the instructions to the contract's fallback function.
+
+##### Example : calling contract with data field in tx
+The same execution would take place as above but **0** would be pushed onto the stack instead of **1** which results in the `JUMPI` opcode to not alter the Program Counter.
+
+Execution continues and runs the following 
+```
+PUSH1 0x0
+CALLDATALOAD
+PUSH29 0x1000000...
+SWAP1
+DIV
+PUSH4 0xffffffff
+AND
+DUP1
+// Dispatcher role starts here
+PUSH4 0x2e1a7d4d  // Pushing function identifier for withdraw() 
+EQ                // If our calculated ident = 0x2e1a7d4d  
+PUSH1 0x41        // withdraw() code address location
+JUMPI             // Jump to withdraw() if equal
+```
+
+`CALLDATALOAD` accepts an index as an argument and reads 32Bytes from that index. So in our case, 32Bytes of the calldata starting at byte 0x0 will be read and pushed onto the stack.
+
+`SWAP1` switches the top element on the stack with the i-th element after it. In our case, it swap 0x1000.... with the calldata. (we are essentially creating a byte mask). The `DIV` opcode will push the first 4Bytes of our CALLDATA onto the stack.
+
+Dispatcher starts in next opcode sequences to find which function is being called, operation is documneted in the code comments.
+
+
+
+
